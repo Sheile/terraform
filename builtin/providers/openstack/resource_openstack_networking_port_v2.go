@@ -81,6 +81,7 @@ func resourceNetworkingPortV2() *schema.Resource {
 				Type:     schema.TypeList,
 				Optional: true,
 				ForceNew: false,
+				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"subnet_id": &schema.Schema{
@@ -90,6 +91,7 @@ func resourceNetworkingPortV2() *schema.Resource {
 						"ip_address": &schema.Schema{
 							Type:     schema.TypeString,
 							Optional: true,
+							Computed: true,
 						},
 					},
 				},
@@ -163,7 +165,17 @@ func resourceNetworkingPortV2Read(d *schema.ResourceData, meta interface{}) erro
 	d.Set("device_owner", p.DeviceOwner)
 	d.Set("security_group_ids", p.SecurityGroups)
 	d.Set("device_id", p.DeviceID)
-	d.Set("fixed_ip", p.FixedIPs)
+
+	// Convert the FixedIPs struct into a map before setting it
+	var fixed_ips []map[string]interface{}
+	for _, ip := range p.FixedIPs {
+		fixed_ip := map[string]interface{}{
+			"ip_address": ip.IPAddress,
+			"subnet_id":  ip.SubnetID,
+		}
+		fixed_ips = append(fixed_ips, fixed_ip)
+	}
+	d.Set("fixed_ip", fixed_ips)
 
 	return nil
 }
